@@ -363,7 +363,6 @@ class PixivSpider(object):
     @logger.catch
     def get_arts_by_tag(self, tags, pages, is_original=False, **kwargs):
         '''
-        100users入り
         根据tags来获取artworks
         :param tags: list类型, 图片的tag, 日文, 需要排除的tag前加'-'号
         :param pages: 要爬取的页数
@@ -433,33 +432,20 @@ class PixivSpider(object):
                 ]
                 loop.run_until_complete(asyncio.wait(tasks))
 
-            logger.info('vvv Crawl Tags: {}, Params: {} Done vvv'.format(
-                key_word, kwargs))
+            logger.info(
+                'vvv Crawl Tags: {}, Params: {}, Pages: {} Done vvv'.format(
+                    key_word, kwargs, pages))
         except Exception as e:
             logger.error("!!! Crawl Error: {} !!!".format(e))
 
 
 # %%
 if __name__ == '__main__':
-
     pid = 81691228
-    # mode, content, page = '', '', 1
-    # author_id =
-    # user_id =
-    # tags = []
-    # pages =
-    # params = {}
-
     try:
         with open("cookie.txt", "r") as f:
             cookie = f.read()
         spider = PixivSpider(cookie, True)
-
         spider.get_art_by_pid(pid)
-        # spider.get_arts_by_rank(mode, content, page)
-        # for user_id in users_id:
-        # spider.get_arts_by_author_id(author_id)
-        # spider.get_arts_by_tag(tags, pages, **params)
-        # spider.get_user_bookmarks(user_id)
     except Exception as e:
         print('--- Error: {} ---'.format(e))
