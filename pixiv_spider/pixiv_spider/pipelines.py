@@ -14,9 +14,13 @@ from scrapy.pipelines.images import ImagesPipeline
 
 
 class ImagePipeline(ImagesPipeline):
+    '''
+    图片下载Pipeline
+    '''
     def get_media_requests(self, item, info):
         img_url = "https://www.pixiv.net/ajax/illust/{pid}/pages".format(pid=item['pid'])
-        body = json.loads(requests.get(img_url, headers=HEADERS).text)['body']
+        res = requests.get(img_url, headers=HEADERS).text
+        body = json.loads(res)['body']
 
         for ill_num in range(0, len(body)):
             if IMAGE_ORIGINAL:

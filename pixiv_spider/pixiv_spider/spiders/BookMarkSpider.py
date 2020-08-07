@@ -5,7 +5,7 @@ from pixiv_spider.items import ImageItem
 
 
 class BookMarkSpider(Spider):
-    name = 'BookMarkSpider'
+    name = 'BookmarkSpider'
 
     def start_requests(self):
         limit = 48

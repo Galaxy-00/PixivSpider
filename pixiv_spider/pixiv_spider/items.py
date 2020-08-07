@@ -9,7 +9,11 @@ import scrapy
 
 
 class ImageItem(scrapy.Item):
+    '''
+    图片item
+    '''
     connections = 'images'
+    
     pid = scrapy.Field()
     title = scrapy.Field()
     author_id = scrapy.Field()
