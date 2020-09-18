@@ -61,16 +61,13 @@ DOWNLOADER_MIDDLEWARES = {
 #    'scrapy.extensions.telnet.TelnetConsole': None,
 #}
 
-# DOWNLOADER_MIDDLEWARES = {
-#     'pixiv_spider.middlewares.RequestMiddleware': 543,
-# }
 # Configure item pipelines
 # See https://doc.scrapy.org/en/latest/topics/item-pipeline.html
 ITEM_PIPELINES = {
-    # 'pixiv_spider.pipelines.ImagePipeline': 300,
+    'pixiv_spider.pipelines.PixivImagePipeline': 300,
+    # 'pixiv_spider.pipelines.MysqlPipeline': 301,
+    # 'pixiv_spider.pipelines.MongoPipeline': 302,
 }
-IMAGES_STORE = './images'
-IMAGE_ORIGINAL = False
 
 # Enable and configure the AutoThrottle extension (disabled by default)
 # See https://doc.scrapy.org/en/latest/topics/autothrottle.html
@@ -92,9 +89,22 @@ IMAGE_ORIGINAL = False
 #HTTPCACHE_DIR = 'httpcache'
 #HTTPCACHE_IGNORE_HTTP_CODES = []
 #HTTPCACHE_STORAGE = 'scrapy.extensions.httpcache.FilesystemCacheStorage'
+import yaml
+with open('setting.yaml', 'r') as f:
+    yaml_data = yaml.load(f.read())
+
+# DATABASE
+MYSQL_HOST = yaml_data['DB']['MYSQL']['host']
+MYSQL_DATABASE = yaml_data['DB']['MYSQL']['database']
+MYSQL_USER = yaml_data['DB']['MYSQL']['user']
+MYSQL_PASSWORD = yaml_data['DB']['MYSQL']['password']
+MYSQL_PORT = yaml_data['DB']['MYSQL']['port']
+
+MONGO_URL = yaml_data['DB']['MONGO']['url']
+MONGO_DB = yaml_data['DB']['MONGO']['database']
 
 FEED_EXPORT_ENCODING = 'UTF-8'
-COOKIE = '__cfduid=d2351997c5b464216ce7f46533ef6bc931595587628; first_visit_datetime_pc=2020-07-24+19%3A47%3A09; p_ab_id=6; p_ab_id_2=1; p_ab_d_id=1646478660; yuid_b=GUVzKQQ; _ga=GA1.2.1051181453.1595587636; PHPSESSID=19274869_M2LD8GBA5fJRGW7PCBAJY5JlI97ck8Ug; device_token=00bc11c3fcef99fd46e379d6b16ff357; c_type=20; privacy_policy_agreement=2; a_type=0; b_type=1; __utmz=235335808.1595651410.3.2.utmcsr=accounts.pixiv.net|utmccn=(referral)|utmcmd=referral|utmcct=/login; _fbp=fb.1.1595651458786.140744553; ki_r=; ki_s=208879%3A0.0.0.0.0; login_ever=yes; __utmv=235335808.|2=login%20ever=yes=1^3=plan=normal=1^5=gender=male=1^6=user_id=19274869=1^9=p_ab_id=6=1^10=p_ab_id_2=1=1^11=lang=zh=1; __gads=ID=978ac719fa9e4b0e:T=1595651681:S=ALNI_MY-jUzjNICI-Qi1ueMaWvdG8KcJaQ; stacc_mode=unify; __utmc=235335808; _gid=GA1.2.775098661.1596733037; __utma=235335808.1051181453.1595587636.1596733012.1596737058.25; ki_t=1595651496977%3B1596725950518%3B1596737075045%3B7%3B21; __utmt=1; __utmb=235335808.4.10.1596737058; tag_view_ranking=0xsDLqCEW6~MM6RXH_rlN~hRkZZnS6_e~jImOpI7tih~RTJMXD26Ak~r9KLLtm3OI~Mp-0OZE3a7~2QTW_H5tVX~aKhT3n4RHZ~_bee-JX46i~K8esoIs2eW~RcahSSzeRf~wjW5Y25gNH~NE-E8kJhx6~kGYw4gQ11Z~yPNaP3JSNF~Lt-oEicbBr~FqVQndhufZ~ujS7cIBGO-~q3eUobDMJW~isq3YRjJST~aLBjcKpvWL~nAtxkwJ5Sy~X4Eo-DdiUB~P5-w_IbJrm~-7ZTNQgdHv~h9fEA3tOFb~FgYArp6riX~CiSfl_AE0h~uC2yUZfXDc~QzKFCsGzn-~gtCILpPR9I~rGL2M8Jtgs~OgdypjrwdX~lQdVtncC-e~ePN3h1AXKX~_hSAdpN9rx~fWCK3-i_Fl~MWsPQsH1zi~ZBoVMjk2oM~2XSW7Dtt5E~J5hwvO5aFP~ctVZDT3sJK~WBevMnRO5F~4i9bTBXFoE~moGH48WbdM~bcAbumoPKA~gFY3XTihBM~LjHBwm3QmE~-bMa1UG3vE~VbPCYJXdEP~5mzv1EsHcE~5oPIfUbtd6~KN7uxuR89w~dzUQ-UDpYR~UfOZya7vqn~urcsq7fSsP~EZQqoW9r8g~ORA_C6YTOW~Ltq1hgLZe3~m-t9tha8UL~RthHN5LPvq~o8dzxSm6-F~PgeKPkeNFT~868PO22OrF~q_J28dYJ9d~QYP1NVhSHo~UBwhLy7Ngq~D9BseuUB5Z~2oy09JOeaJ~NsbQEogeyL~sRQy4rKivk~vdbd7LdFLQ~aC55Umcfh1~aqEioPF-VG~-oGijJmC5S~bWOtF0h5eA~sq68XTJrzi~9s62wUfVkX~52-15K-YXl~WcTW9TCOx9~jlDvv4Zu_K~r_Jjn6Ua2V~fUS-Ay2M9Z~3W4zqr4Xlx~ARZHSD6_B8~PHsucBd84t~ESbJLjiODP~Hvc3ekMyyh~LJo91uBPz4~EnqYNzLSIs~jH0uD88V6F~aU1t5sGM1S~RolC8IrBVO~HLWLeyYOUF~abgLj5TdiI~LsibVjl_VV~iWYAidoiGx~UR3UZdHtim~MUQoS0sfqG'
+COOKIE = yaml_data['Setting']['cookie']
 HEADERS = {
     "Accept-Language": "zh-CN,zh;q=0.8",
     "Referer": "https://www.pixiv.net/login.php",
@@ -104,14 +114,11 @@ HEADERS = {
     'Cookie': COOKIE
 }
 
-USER_ID = 19274869
-MAX_PAGES = 1
-AUTHOR_ID = 1193008
-
-# daily weekly monthly rookie新人 original原创 
-# male female daily_r18 weekly_r18 male_r18 female_r18
-MODE = 'weekly'
-
-KEY_WORD = '鳩羽つぐ'
-# all safe r18
-TAG_MODE = "all"  
+IMAGES_STORE = yaml_data['Setting']['images_store']
+IMAGE_ORIGINAL = yaml_data['Setting']['image_original']
+USER_ID = yaml_data['Setting']['user_id']
+MAX_PAGES = yaml_data['Setting']['max_pages']
+AUTHOR_ID = yaml_data['Setting']['author_id']
+MODE = yaml_data['Setting']['mode']
+KEY_WORD = yaml_data['Setting']['key_word']
+TAG_MODE = yaml_data['Setting']['tag_mode']

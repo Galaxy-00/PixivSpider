@@ -27,5 +27,5 @@ class RankSpider(Spider):
             item['title'] = single['title']
             item['author_name'] = single['user_name']
             item['author_id'] = single['user_id']
-            print('item', item)
+            # print('item', item)
             yield item

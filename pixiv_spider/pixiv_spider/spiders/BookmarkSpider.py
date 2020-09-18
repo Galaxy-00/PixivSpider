@@ -4,7 +4,7 @@ from pixiv_spider.settings import USER_ID
 from pixiv_spider.items import ImageItem
 
 
-class BookMarkSpider(Spider):
+class BookmarkSpider(Spider):
     name = 'BookmarkSpider'
 
     def start_requests(self):

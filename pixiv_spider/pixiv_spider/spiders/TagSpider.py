@@ -33,5 +33,5 @@ class TagSpider(Spider):
                 item['title'] = single['illustTitle']
                 item['author_name'] = single['userName']
                 item['author_id'] = single['userId']
-                print('item', item)
+                # print('item', item)
                 yield item

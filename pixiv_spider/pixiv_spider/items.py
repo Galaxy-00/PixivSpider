@@ -12,8 +12,10 @@ class ImageItem(scrapy.Item):
     '''
     图片item
     '''
-    connections = 'images'
-    
+    table = collection = 'image_info'
+    store_table = 'image_store'
+
+    image_url = []
     pid = scrapy.Field()
     title = scrapy.Field()
     author_id = scrapy.Field()

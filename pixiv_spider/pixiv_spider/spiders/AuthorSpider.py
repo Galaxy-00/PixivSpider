@@ -7,7 +7,6 @@ from pixiv_spider.items import ImageItem
 
 class AuthorSpider(Spider):
     name = 'AuthorSpider'
-    # allowed_domains = ['www.pixiv.net']
 
     def start_requests(self):
         base_url = "https://www.pixiv.net/ajax/user/{user_id}/profile/all"
@@ -29,5 +28,5 @@ class AuthorSpider(Spider):
             item['author_id'] = AUTHOR_ID
             # item['author_name'] = 
             # item['title'] = 
-            print('item', item)
+            # print('item', item)
             yield item

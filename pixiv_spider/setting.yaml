@@ -1,0 +1,20 @@
+DB:
+  MYSQL:
+    host: "localhost"
+    database: "pixiv_images"
+    user: "root"
+    password: None
+    port: 3306
+  MONGO:
+    url: "localhost"
+    database: "pixiv_image"
+Setting:
+  cookie: ""
+  images_store: "./images"
+  image_original: false
+  user_id: None
+  max_pages: 30
+  author_id: None
+  mode: None # MODE: daily weekly monthly rookie新人 original原创 male female daily_r18 weekly_r18 male_r18 female_r18
+  key_word: None
+  tag_mode: "all" # TAG_MODE: all safe r18
