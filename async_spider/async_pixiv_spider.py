@@ -3,6 +3,7 @@ import os
 import json
 import time
 import asyncio
+from typing import Any, List
 import requests
 from re import error
 from loguru import logger
@@ -17,7 +18,7 @@ class PixivSpider(object):
     '''
     Pixiv爬虫
     '''
-    def __init__(self, cookie, enable_save_log=False) -> None:
+    def __init__(self, cookie: str, enable_save_log: bool = False) -> None:
         '''
         初始化爬虫
         :param cookie: 登录后的cookie
@@ -25,10 +26,10 @@ class PixivSpider(object):
         '''
         self.headers = {
             "Accept-Language": "zh-CN,zh;q=0.8",
-            "Referer": "https://www.pixiv.net/login.php",
+            "Referer": "https://www.pixiv.net",
             "Origin": "https://accounts.pixiv.net",
             "User-Agent":
-            "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.89 Safari/537.36",
+            "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36",
             "Cookie": cookie
         }
         self.enable_save_log = enable_save_log
@@ -38,13 +39,13 @@ class PixivSpider(object):
         self.artwork_url = "https://www.pixiv.net/ajax/illust/{pid}/pages"
         self.ranking_url = "https://www.pixiv.net/ranking.php?mode={mode}&p={page}&format=json"
         self.ranking_content_url = "https://www.pixiv.net/ranking.php?mode={mode}&content={content}&p={page}&format=json"
-        self.tag_url = 'https://www.pixiv.net/ajax/search/artworks/{key_word}?p={page}&{params}'
+        self.tag_url = "https://www.pixiv.net/ajax/search/artworks/{key_word}?p={page}&{params}"
 
     @logger.catch
     @retry(stop_max_attempt_number=3,
            wait_random_min=600,
            wait_random_max=1500)
-    async def __async_get_page(self, url, is_bytes=False):
+    async def __async_get_page(self, url: str, is_bytes: bool = False):
         '''
         异步请求页面
         尝试请求3次, 每次最短等待600ms, 最长等待1.5s
@@ -65,7 +66,7 @@ class PixivSpider(object):
     @retry(stop_max_attempt_number=3,
            wait_random_min=600,
            wait_random_max=1500)
-    def __get_page(self, url, is_bytes=False):
+    def __get_page(self, url: str, is_bytes: bool = False):
         '''
         请求页面
         尝试请求3次, 每次最短等待600ms, 最长等待1.5s
@@ -82,7 +83,7 @@ class PixivSpider(object):
                 url, e))
 
     @logger.catch
-    def __store_image(self, image_data, image_name, dir_path):
+    def __store_image(self, image_data: bytes, image_name: str, dir_path: str):
         '''
         将图像以其名字存储到对应目录中
         :param image_data: 图像二进制数据
@@ -105,9 +106,9 @@ class PixivSpider(object):
 
     @logger.catch
     async def __async_get_art_by_pid(self,
-                                     pid,
-                                     dir_path='image',
-                                     is_original=False):
+                                     pid: str,
+                                     dir_path: str = 'image',
+                                     is_original: bool = False):
         '''
         异步爬取pid的图片
         :param pid: 图片pid
@@ -152,7 +153,10 @@ class PixivSpider(object):
             logger.error("!!! Get Image Failed, Reason: {} !!!".format(e))
 
     @logger.catch
-    def get_art_by_pid(self, pid, dir_path='image', is_original=False):
+    def get_art_by_pid(self,
+                       pid: str,
+                       dir_path: str = 'image',
+                       is_original: bool = False):
         '''
         爬取pid的图片
         :param pid: 图片pid
@@ -161,24 +165,24 @@ class PixivSpider(object):
         '''
         try:
             start_time = datetime.now()
-            pid = str(pid)
             logger.info('--- Crawling Image Pid: {pid} ---'.format(pid=pid))
-            res = self.__get_page(self.artwork_url.format(pid=pid))
-            body = json.loads(res)["body"]
+            pid, res_js = str(pid), json.loads(
+                self.__get_page(self.artwork_url.format(pid=pid)))
+            if res_js['error']:
+                raise Exception(res_js['message'])
 
-            image_url = ''
+            body, image_url = res_js['body'], ''
             for ill_num in range(0, len(body)):
-                if is_original:
-                    image_url = body[ill_num]["urls"]["original"]
-                else:
-                    image_url = body[ill_num]["urls"]["regular"]
-                if len(body) != 1:
-                    store_name = "{pid}_{num}{type}".format(
-                        pid=pid, num=ill_num, type=image_url[-4:])
-                else:
-                    store_name = "{pid}{type}".format(pid=pid,
-                                                      type=image_url[-4:])
+                image_url = body[ill_num]["urls"][
+                    "original"] if is_original else body[ill_num]["urls"][
+                        "regular"]
 
+                store_name = "{pid}{type}".format(
+                    pid=pid, type=image_url[-4:]) if len(
+                        body) == 1 else "{pid}_{num}{type}".format(
+                            pid=pid, num=ill_num, type=image_url[-4:])
+
+                # 若图片不存在则存储, 存在则跳过
                 if not os.path.exists(os.path.join(dir_path, store_name)):
                     image_data = self.__get_page(image_url, True)
                     self.__store_image(image_data, store_name, dir_path)
@@ -196,7 +200,7 @@ class PixivSpider(object):
             logger.error("!!! Get Image Failed, Reason: {} !!!".format(e))
 
     @logger.catch
-    def get_arts_by_author_id(self, author_id, is_original=False):
+    def get_arts_by_author_id(self, author_id: str, is_original: bool = False):
         '''
         爬取id作者的作品
         :param author_id: id
@@ -206,7 +210,7 @@ class PixivSpider(object):
             logger.info(
                 '::: Crawling Author Id: {} Artworks :::'.format(author_id))
 
-            # 获取作者插画和漫画ｐｉｄ
+            # 获取作者插画和漫画pid
             res = self.__get_page(self.user_url.format(user_id=author_id))
             res_js = json.loads(res)
             illusts_id = list(res_js['body']['illusts'])
@@ -251,7 +255,11 @@ class PixivSpider(object):
                 "!!! Get Author Image Failed, Reason: {} !!!".format(e))
 
     @logger.catch
-    def get_arts_by_rank(self, mode, content, crawl_page, is_original=False):
+    def get_arts_by_rank(self,
+                         mode: str,
+                         content: str,
+                         crawl_page: int,
+                         is_original: bool = False):
         '''
         异步爬取排行榜
         :param mode: daily weekly monthly rookie新人 original原创 male female daily_r18 weekly_r18 male_r18 female_r18
@@ -310,7 +318,7 @@ class PixivSpider(object):
             logger.error('!!! Get Ranking Failed, Reason: {} !!!'.format(e))
 
     @logger.catch
-    def get_user_bookmarks(self, user_id, is_original=False):
+    def get_user_bookmarks(self, user_id: str, is_original: bool = False):
         '''
         异步获取用户id的收藏
         :param user_id: 用户id
@@ -348,8 +356,8 @@ class PixivSpider(object):
                 loop = asyncio.get_event_loop()
                 tasks = [
                     loop.create_task(
-                        self.__async_get_art_by_pid(work['illustId'],
-                                                    store_dir, is_original))
+                        self.__async_get_art_by_pid(work['id'], store_dir,
+                                                    is_original))
                     for work in works
                 ]
                 loop.run_until_complete(asyncio.wait(tasks))
@@ -361,7 +369,11 @@ class PixivSpider(object):
             logger.error('!!! Get User Bookmarks Error: {} !!!'.format(e))
 
     @logger.catch
-    def get_arts_by_tag(self, tags, pages, is_original=False, **kwargs):
+    def get_arts_by_tag(self,
+                        tags: List[str],
+                        pages: int,
+                        is_original: bool = False,
+                        **kwargs):
         '''
         根据tags来获取artworks
         :param tags: list类型, 图片的tag, 日文, 需要排除的tag前加'-'号
@@ -386,11 +398,15 @@ class PixivSpider(object):
                                             params=urlencode(kwargs))
             logger.info('::: Crawling Tags: {}, Params: {} :::'.format(
                 key_word, kwargs))
+            # print(crawl_url)
 
             res_js = json.loads(self.__get_page(crawl_url))
+            if res_js["error"]:
+                raise Exception(res_js["message"])
+
             tag_type, total = "", ""
             if "type" not in kwargs or kwargs["type"] == "all":
-                total = res_js['body']['illustManga']["total"]
+                total = res_js["body"]["illustManga"]["total"]
                 tag_type = "illustManga"
             elif kwargs["type"] == "illust_and_ugoira" or kwargs[
                     "type"] == "illust":
@@ -424,9 +440,9 @@ class PixivSpider(object):
                 loop = asyncio.get_event_loop()
                 tasks = [
                     loop.create_task(
-                        self.__async_get_art_by_pid(single['illustId'],
-                                                    store_dir, is_original))
-                    for single in data if 'illustId' in single
+                        self.__async_get_art_by_pid(single['id'], store_dir,
+                                                    is_original))
+                    for single in data if 'id' in single
                 ]
                 loop.run_until_complete(asyncio.wait(tasks))
 
@@ -444,6 +460,6 @@ if __name__ == '__main__':
         with open("cookie.txt", "r") as f:
             cookie = f.read()
         spider = PixivSpider(cookie, True)
-        spider.get_art_by_pid(pid)
+        spider.get_art_by_pid(pid, "image", True)
     except Exception as e:
         print('--- Error: {} ---'.format(e))
